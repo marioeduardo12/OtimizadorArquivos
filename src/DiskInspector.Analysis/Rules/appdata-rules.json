@@ -1,0 +1,317 @@
+[
+  {
+    "pattern": "\\Google\\Chrome",
+    "appName": "Google Chrome",
+    "publisher": "Google",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Microsoft\\EdgeWebView",
+    "appName": "Microsoft Edge WebView2",
+    "publisher": "Microsoft",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Microsoft\\Edge",
+    "appName": "Microsoft Edge",
+    "publisher": "Microsoft",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\BraveSoftware\\Brave-Browser",
+    "appName": "Brave Browser",
+    "publisher": "Brave Software",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Mozilla\\Firefox",
+    "appName": "Mozilla Firefox",
+    "publisher": "Mozilla",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Opera Software",
+    "appName": "Opera Browser",
+    "publisher": "Opera",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Vivaldi",
+    "appName": "Vivaldi Browser",
+    "publisher": "Vivaldi",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Arc",
+    "appName": "Arc Browser",
+    "publisher": "The Browser Company (Chromium)",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Zen",
+    "appName": "Zen Browser",
+    "publisher": "Zen Team (Gecko)",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\discord",
+    "appName": "Discord",
+    "publisher": "Discord Inc. (Electron)",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Spotify",
+    "appName": "Spotify",
+    "publisher": "Spotify AB",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Code",
+    "appName": "Visual Studio Code",
+    "publisher": "Microsoft (Electron)",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Cursor",
+    "appName": "Cursor IDE",
+    "publisher": "Anysphere (Electron)",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Antigravity",
+    "appName": "Google Antigravity IDE",
+    "publisher": "Google (Electron)",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Windsurf",
+    "appName": "Windsurf IDE",
+    "publisher": "Codeium (Electron)",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Claude",
+    "appName": "Claude Desktop",
+    "publisher": "Anthropic (Electron)",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Linear",
+    "appName": "Linear Desktop",
+    "publisher": "Linear Orbit (Electron)",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Loom",
+    "appName": "Loom Desktop",
+    "publisher": "Loom (Electron)",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Notion",
+    "appName": "Notion",
+    "publisher": "Notion Labs (Electron)",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\obsidian",
+    "appName": "Obsidian",
+    "publisher": "Obsidian (Electron)",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Slack",
+    "appName": "Slack",
+    "publisher": "Salesforce / Slack (Electron)",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Figma",
+    "appName": "Figma Desktop",
+    "publisher": "Figma (Electron)",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Postman",
+    "appName": "Postman",
+    "publisher": "Postman Inc. (Electron)",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Insomnia",
+    "appName": "Insomnia API Client",
+    "publisher": "Kong (Electron)",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\bruno",
+    "appName": "Bruno API Client",
+    "publisher": "Bruno (Electron)",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\GitHubDesktop",
+    "appName": "GitHub Desktop",
+    "publisher": "GitHub (Electron)",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\obs-studio",
+    "appName": "OBS Studio",
+    "publisher": "OBS Project",
+    "trustCacheFolderNames": false,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Zoom",
+    "appName": "Zoom Workplace",
+    "publisher": "Zoom Video Communications",
+    "trustCacheFolderNames": false,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Telegram Desktop",
+    "appName": "Telegram Desktop",
+    "publisher": "Telegram Messenger",
+    "trustCacheFolderNames": false,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\WhatsApp",
+    "appName": "WhatsApp Desktop",
+    "publisher": "Meta",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Steam",
+    "appName": "Steam Client",
+    "publisher": "Valve",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\EpicGamesLauncher",
+    "appName": "Epic Games Launcher",
+    "publisher": "Epic Games",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Battle.net",
+    "appName": "Blizzard Battle.net",
+    "publisher": "Blizzard Entertainment",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Riot Games",
+    "appName": "Riot Client / Valorant / LoL",
+    "publisher": "Riot Games",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\1Password",
+    "appName": "1Password Desktop",
+    "publisher": "AgileBits",
+    "trustCacheFolderNames": false,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Bitwarden",
+    "appName": "Bitwarden Desktop",
+    "publisher": "Bitwarden (Electron)",
+    "trustCacheFolderNames": false,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\DBeaverData",
+    "appName": "DBeaver Database Manager",
+    "publisher": "DBeaver Corp",
+    "trustCacheFolderNames": false,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\pgAdmin",
+    "appName": "pgAdmin PostgreSQL Tools",
+    "publisher": "pgAdmin Development Team",
+    "trustCacheFolderNames": false,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\MongoDBCompass",
+    "appName": "MongoDB Compass",
+    "publisher": "MongoDB Inc. (Electron)",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\CapCut",
+    "appName": "CapCut Video Editor",
+    "publisher": "Bytedance",
+    "trustCacheFolderNames": false,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Canva",
+    "appName": "Canva Desktop",
+    "publisher": "Canva (Electron)",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Blender Foundation",
+    "appName": "Blender 3D",
+    "publisher": "Blender Foundation",
+    "trustCacheFolderNames": false,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Adobe",
+    "appName": "Adobe Creative Cloud / Apps",
+    "publisher": "Adobe Inc.",
+    "trustCacheFolderNames": false,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\JetBrains",
+    "appName": "JetBrains IDEs",
+    "publisher": "JetBrains",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": false
+  },
+  {
+    "pattern": "\\Google\\AndroidStudio",
+    "appName": "Android Studio",
+    "publisher": "Google / JetBrains",
+    "trustCacheFolderNames": true,
+    "prefixOfSegment": true
+  }
+]

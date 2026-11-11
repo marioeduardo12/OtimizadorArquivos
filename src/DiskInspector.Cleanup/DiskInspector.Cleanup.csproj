@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DiskInspector.Core\DiskInspector.Core.csproj" />
+    <ProjectReference Include="..\DiskInspector.Infrastructure\DiskInspector.Infrastructure.csproj" />
+    <ProjectReference Include="..\DiskInspector.Analysis\DiskInspector.Analysis.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DiskInspector.Tests" />
+  </ItemGroup>
+
+</Project>
+
