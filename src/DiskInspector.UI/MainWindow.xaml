@@ -1,0 +1,1758 @@
+<Window x:Class="DiskInspector.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mvvm="clr-namespace:DiskInspector.UI.MVVM"
+        xmlns:models="clr-namespace:DiskInspector.Core.Models;assembly=DiskInspector.Core"
+        Title="DiskInspector — Analisador e Otimizador Seguro de Armazenamento (Windows 11)"
+        Width="1540"
+        Height="920"
+        MinWidth="1180"
+        MinHeight="720"
+        WindowStartupLocation="CenterScreen"
+        Background="#131418"
+        Foreground="#F3F4F6"
+        FontFamily="Segoe UI Variable Text, Segoe UI">
+
+    <Window.Resources>
+        <mvvm:RiskToForegroundBrushConverter x:Key="RiskFgConverter" />
+        <mvvm:RiskToBackgroundBrushConverter x:Key="RiskBgConverter" />
+        <mvvm:HexToBrushConverter x:Key="HexBrushConverter" />
+        <mvvm:BoolToVisibilityConverter x:Key="BoolToVis" />
+        <mvvm:NullOrEmptyToVisibilityConverter x:Key="NullToVis" />
+
+        <!-- Estilo escuro moderno para Botões (evita caixa branca quando desabilitado no WPF) -->
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#262936" />
+            <Setter Property="Foreground" Value="#F3F4F6" />
+            <Setter Property="BorderBrush" Value="#3B4054" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="12,5" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="BtnBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="5"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BtnBorder" Property="Opacity" Value="0.88" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="BtnBorder" Property="Opacity" Value="0.75" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="BtnBorder" Property="Background" Value="#1E202B" />
+                                <Setter TargetName="BtnBorder" Property="BorderBrush" Value="#2B2E3B" />
+                                <Setter Property="Foreground" Value="#5E6478" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Estilo escuro moderno estilo Windows 11 para Abas (remove abas brancas legadas do WPF) -->
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="#181920" />
+            <Setter Property="BorderBrush" Value="#2B2E3B" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+
+        <Style TargetType="TabItem">
+            <Setter Property="Foreground" Value="#9CA3AF" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="14,8" />
+            <Setter Property="Margin" Value="0,0,4,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="TabBorder"
+                                Background="#15171F"
+                                BorderBrush="#262A38"
+                                BorderThickness="1,1,1,0"
+                                CornerRadius="6,6,0,0"
+                                Padding="{TemplateBinding Padding}"
+                                Margin="{TemplateBinding Margin}">
+                            <Grid>
+                                <ContentPresenter ContentSource="Header"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center" />
+                                <Border x:Name="ActiveIndicator"
+                                        Height="2.5"
+                                        CornerRadius="1.5"
+                                        Background="Transparent"
+                                        VerticalAlignment="Bottom"
+                                        Margin="-6,-8,-6,-8" />
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="TabBorder" Property="Background" Value="#1E2230" />
+                                <Setter Property="Foreground" Value="#E5E7EB" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="TabBorder" Property="Background" Value="#232838" />
+                                <Setter TargetName="TabBorder" Property="BorderBrush" Value="#3B4259" />
+                                <Setter TargetName="ActiveIndicator" Property="Background" Value="#38BDF8" />
+                                <Setter Property="Foreground" Value="#FFFFFF" />
+                                <Setter Property="FontWeight" Value="Bold" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Estilo global de DataGrid escuro estilo Windows 11 com suporte a seleção múltipla -->
+        <Style TargetType="DataGrid">
+            <Setter Property="Background" Value="#181920" />
+            <Setter Property="RowBackground" Value="#1C1E26" />
+            <Setter Property="AlternatingRowBackground" Value="#21232D" />
+            <Setter Property="Foreground" Value="#E5E7EB" />
+            <Setter Property="BorderBrush" Value="#2B2E3B" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="GridLinesVisibility" Value="Horizontal" />
+            <Setter Property="HorizontalGridLinesBrush" Value="#262936" />
+            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="RowHeight" Value="32" />
+            <Setter Property="SelectionMode" Value="Extended" />
+            <Setter Property="SelectionUnit" Value="FullRow" />
+            <Setter Property="AutoGenerateColumns" Value="False" />
+            <Setter Property="CanUserAddRows" Value="False" />
+            <Setter Property="CanUserDeleteRows" Value="False" />
+        </Style>
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#232632" />
+            <Setter Property="Foreground" Value="#9CA3AF" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="BorderBrush" Value="#2E3240" />
+            <Setter Property="BorderThickness" Value="0,0,1,1" />
+        </Style>
+
+        <Style TargetType="DataGridCell">
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#2D3B55" />
+                    <Setter Property="Foreground" Value="#FFFFFF" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 1. Cabeçalho Superior e Trava de Modo de Segurança -->
+        <Border Grid.Row="0" Background="#1C1E26" BorderBrush="#2B2E3B" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Background="#0284C7" Width="36" Height="36" CornerRadius="8" Margin="0,0,12,0">
+                        <TextBlock Text="DI" FontWeight="Bold" FontSize="16" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="DiskInspector" FontSize="18" FontWeight="Bold" Foreground="#F9FAFB" />
+                            <TextBlock Text=" — Analisador Profundo e Otimizador de Armazenamento" FontSize="14" Foreground="#9CA3AF" VerticalAlignment="Bottom" Margin="4,0,0,1" />
+                            <Border Background="#252836" BorderBrush="#3B4054" BorderThickness="1" CornerRadius="4" Padding="8,2" Margin="12,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding PrivilegeStatusBadge, Mode=OneWay}" FontSize="11" FontWeight="SemiBold" Foreground="#38BDF8" />
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="{Binding PrivilegeExplanation, Mode=OneWay}" FontSize="11.5" Foreground="#9CA3AF" Margin="0,2,0,0" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Seletor de Modo: Limpeza Controlada vs Somente Leitura -->
+                <Border Grid.Column="1" Background="#161820" BorderBrush="#33384A" BorderThickness="1" CornerRadius="6" Padding="12,6" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <CheckBox IsChecked="{Binding IsCleanupUnlocked}"
+                                  VerticalAlignment="Center"
+                                  Foreground="#F3F4F6"
+                                  FontWeight="SemiBold"
+                                  Content="Habilitar Limpeza Controlada" />
+                        <TextBlock Text="|" Foreground="#4B5563" Margin="10,0" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding SecurityModeStatusText, Mode=OneWay}" FontSize="11.5" Foreground="#34D399" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- 2. Barra de controles: linha 1 = o que analisar e a ação principal; linha 2 = seleção rápida + desfazer -->
+        <Border Grid.Row="1" Background="#1C1E26" BorderBrush="#2B2E3B" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,10">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MaxWidth="320" MinWidth="200" />
+                    <ColumnDefinition Width="*" MaxWidth="280" MinWidth="180" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Seleção de Unidade -->
+                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                    <TextBlock Text="UNIDADE DE DISCO" FontSize="10.5" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,4" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ComboBox ItemsSource="{Binding Drives}"
+                                  SelectedItem="{Binding SelectedDrive}"
+                                  DisplayMemberPath="DisplayTitle"
+                                  Height="32"
+                                  VerticalContentAlignment="Center" />
+                        <Button Grid.Column="1"
+                                Content="↻"
+                                ToolTip="Atualizar lista de unidades"
+                                Command="{Binding RefreshDrivesCommand}"
+                                Width="32"
+                                Height="32"
+                                Padding="0"
+                                Margin="6,0,0,0" />
+                    </Grid>
+                </StackPanel>
+
+                <!-- Escopo de Varredura -->
+                <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                    <TextBlock Text="ESCOPO DA ANÁLISE" FontSize="10.5" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,4" />
+                    <ComboBox ItemsSource="{Binding ScanScopeOptions}"
+                              SelectedItem="{Binding SelectedScanScope}"
+                              Height="32"
+                              VerticalContentAlignment="Center" />
+                </StackPanel>
+
+                <!-- Botões Iniciar / Cancelar -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Bottom">
+                    <Button Command="{Binding StartScanCommand}"
+                            Content="▶ Analisar Armazenamento"
+                            Height="34"
+                            Padding="14,0"
+                            Background="#0284C7"
+                            Foreground="White"
+                            FontWeight="SemiBold"
+                            BorderBrush="#38BDF8"
+                            Margin="0,0,8,0" />
+
+                    <Button Command="{Binding CancelScanCommand}"
+                            Content="⏹ Cancelar"
+                            Height="34"
+                            Padding="12,0"
+                            Background="#374151"
+                            Foreground="#F3F4F6"
+                            BorderBrush="#4B5563"
+                            ToolTip="Interrompe a análise, a busca de duplicados ou a limpeza em andamento" />
+                </StackPanel>
+
+                <!-- Ação principal: sempre visível, alinhada à direita -->
+                <Button Grid.Column="4"
+                        Command="{Binding OpenCleanupPreviewCommand}"
+                        Content="{Binding CleanActionButtonText, Mode=OneWay}"
+                        Height="34"
+                        Padding="14,0"
+                        VerticalAlignment="Bottom"
+                        Background="#15803D"
+                        Foreground="White"
+                        FontWeight="Bold"
+                        BorderBrush="#22C55E"
+                        ToolTip="Mostra a prévia do que será removido. Nada é alterado antes da sua confirmação." />
+
+                <!-- Seleção rápida + Desfazer última limpeza -->
+                <WrapPanel Grid.Row="1" Grid.ColumnSpan="5" Margin="0,10,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="SELEÇÃO RÁPIDA" FontSize="10.5" FontWeight="Bold" Foreground="#9CA3AF" VerticalAlignment="Center" Margin="0,0,12,4" />
+
+                    <Button Command="{Binding SelectAllSafeGreenCommand}"
+                            Content="✅ Todos os verdes"
+                            Height="28"
+                            Padding="10,0"
+                            Background="#143323"
+                            Foreground="#4ADE80"
+                            FontWeight="SemiBold"
+                            BorderBrush="#22C55E"
+                            Margin="0,0,6,4"
+                            ToolTip="Marca todos os itens de baixo risco (verdes) encontrados na análise" />
+
+                    <Button Command="{Binding SelectAllYellowCommand}"
+                            Content="⚠️ + Todos os amarelos"
+                            Height="28"
+                            Padding="10,0"
+                            Background="#332814"
+                            Foreground="#FACC15"
+                            FontWeight="SemiBold"
+                            BorderBrush="#EAB308"
+                            Margin="0,0,6,4"
+                            ToolTip="Acrescenta à seleção os itens que pedem atenção (amarelos): downloads antigos, temporários recentes, dependências de projetos. Revise a prévia antes de confirmar." />
+
+                    <Button Command="{Binding SelectAllDormantProjectsCommand}"
+                            Content="📦 Projetos parados (&gt;90d)"
+                            Height="28"
+                            Padding="10,0"
+                            Background="#1E293B"
+                            Foreground="#38BDF8"
+                            FontWeight="SemiBold"
+                            BorderBrush="#0284C7"
+                            Margin="0,0,6,4"
+                            ToolTip="Marca dependências (node_modules, .venv) de projetos cujo código não é alterado há mais de 90 dias" />
+
+                    <Button Command="{Binding ClearSelectionCommand}"
+                            Content="❌ Desmarcar tudo"
+                            Height="28"
+                            Padding="10,0"
+                            Background="#262936"
+                            Foreground="#D1D5DB"
+                            BorderBrush="#3B4054"
+                            Margin="0,0,10,4" />
+
+                    <!-- Diferencial 7B: Desfazer última limpeza (Restaurar da Lixeira em 1 clique) -->
+                    <Button Command="{Binding UndoLastCleanupCommand}"
+                            Content="↩️ Desfazer última limpeza (Lixeira)"
+                            Height="28"
+                            Padding="10,0"
+                            Background="#2E1B36"
+                            Foreground="#E9D5FF"
+                            FontWeight="SemiBold"
+                            BorderBrush="#A855F7"
+                            Margin="0,0,14,4"
+                            ToolTip="Restaura automaticamente da Lixeira do Windows para os caminhos originais os itens movidos na última limpeza" />
+
+                    <CheckBox IsChecked="{Binding PreferRecycleBin}"
+                              Content="Usar Lixeira (permite desfazer)"
+                              Foreground="#D1D5DB"
+                              VerticalAlignment="Center"
+                              Margin="0,0,0,4"
+                              ToolTip="Com esta opção ligada, nada é excluído em definitivo: o que não puder ir para a Lixeira (ou não couber nela) é bloqueado. Desmarque apenas se quiser exclusão definitiva." />
+                </WrapPanel>
+            </Grid>
+        </Border>
+
+        <!-- 3. Cartões KPI da Unidade e Estimativa Recuperável -->
+        <UniformGrid Grid.Row="2" Columns="5" Margin="0,0,0,10">
+            <!-- Capacidade Total -->
+            <Border Background="#1C1E26" BorderBrush="#2B2E3B" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Text="CAPACIDADE TOTAL DO DISCO" FontSize="10.5" FontWeight="Bold" Foreground="#9CA3AF" />
+                    <TextBlock Text="{Binding DriveTotalCapacityText, Mode=OneWay}" FontSize="20" FontWeight="Bold" Foreground="#F9FAFB" Margin="0,2,0,2" />
+                    <TextBlock Text="{Binding DriveFileSystemText, Mode=OneWay}" FontSize="11.5" Foreground="#60A5FA" />
+                </StackPanel>
+            </Border>
+
+            <!-- Espaço Utilizado e % -->
+            <Border Background="#1C1E26" BorderBrush="#2B2E3B" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,8,0">
+                <StackPanel>
+                    <Grid>
+                        <TextBlock Text="ESPAÇO UTILIZADO / OCUPAÇÃO" FontSize="10.5" FontWeight="Bold" Foreground="#9CA3AF" />
+                        <TextBlock Text="{Binding DriveUsagePercentText, Mode=OneWay}" FontSize="12" FontWeight="Bold" Foreground="#38BDF8" HorizontalAlignment="Right" />
+                    </Grid>
+                    <TextBlock Text="{Binding DriveUsedSpaceText, Mode=OneWay}" FontSize="20" FontWeight="Bold" Foreground="#F9FAFB" Margin="0,2,0,4" />
+                    <ProgressBar Value="{Binding DriveUsagePercentValue, Mode=OneWay}" Maximum="100" Height="6" Background="#2B2E3B" Foreground="#0284C7" BorderThickness="0" />
+                </StackPanel>
+            </Border>
+
+            <!-- Espaço Disponível -->
+            <Border Background="#1C1E26" BorderBrush="#2B2E3B" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Text="ESPAÇO DISPONÍVEL (LIVRE)" FontSize="10.5" FontWeight="Bold" Foreground="#9CA3AF" />
+                    <TextBlock Text="{Binding DriveFreeSpaceText, Mode=OneWay}" FontSize="20" FontWeight="Bold" Foreground="#34D399" Margin="0,2,0,2" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding RecycleBinSummaryText, Mode=OneWay}"
+                                   FontSize="11"
+                                   Foreground="#9CA3AF"
+                                   TextTrimming="CharacterEllipsis"
+                                   VerticalAlignment="Center"
+                                   ToolTip="O que está na Lixeira continua ocupando o disco. O espaço só é liberado quando ela é esvaziada." />
+                        <Button Grid.Column="1"
+                                Command="{Binding EmptyRecycleBinCommand}"
+                                Content="Esvaziar…"
+                                FontSize="10.5"
+                                Padding="6,1"
+                                Margin="6,0,0,0"
+                                ToolTip="Esvazia a Lixeira desta unidade. O Windows pede confirmação; depois disso os itens não podem mais ser restaurados." />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Tamanho Analisado (Lógico vs Alocado) -->
+            <Border Background="#1C1E26" BorderBrush="#2B2E3B" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Text="VOLUME VARRIDO (LÓGICO / ALOCADO)" FontSize="10.5" FontWeight="Bold" Foreground="#9CA3AF" />
+                    <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
+                        <TextBlock Text="{Binding ScannedLogicalSizeText, Mode=OneWay}" FontSize="19" FontWeight="Bold" Foreground="#F9FAFB" />
+                        <TextBlock Text=" / " FontSize="16" Foreground="#6B7280" VerticalAlignment="Bottom" />
+                        <TextBlock Text="{Binding ScannedAllocatedSizeText, Mode=OneWay}" FontSize="15" FontWeight="SemiBold" Foreground="#A78BFA" VerticalAlignment="Bottom" />
+                    </StackPanel>
+                    <TextBlock FontSize="11.5" Foreground="#9CA3AF">
+                        <Run Text="{Binding FilesScannedText, Mode=OneWay}" />
+                        <Run Text=" arquivos • " />
+                        <Run Text="{Binding DirsScannedText, Mode=OneWay}" />
+                        <Run Text=" pastas" />
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <!-- Espaço Recuperável Estimado -->
+            <Border Background="#17251F" BorderBrush="#22C55E" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                <StackPanel>
+                    <TextBlock Text="ESPAÇO RECUPERÁVEL ESTIMADO" FontSize="10.5" FontWeight="Bold" Foreground="#86EFAC" />
+                    <TextBlock Text="{Binding EstimatedRecoverableTotalText, Mode=OneWay}" FontSize="20" FontWeight="Bold" Foreground="#4ADE80" Margin="0,2,0,2" />
+                    <TextBlock FontSize="11.5" Foreground="#D1FAE5">
+                        <Run Text="Verde: " />
+                        <Run Text="{Binding EstimatedGreenRecoverableText, Mode=OneWay}" FontWeight="SemiBold" />
+                        <Run Text=" • Amarelo: " />
+                        <Run Text="{Binding EstimatedYellowRecoverableText, Mode=OneWay}" FontWeight="SemiBold" />
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <!-- 4. Barra de Status e Progresso em Segundo Plano -->
+        <Border Grid.Row="3" Background="#181920" BorderBrush="#2B2E3B" BorderThickness="1" CornerRadius="6" Padding="12,7" Margin="0,0,0,10">
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="{Binding StatusHeadline, Mode=OneWay}" FontWeight="SemiBold" FontSize="12.5" Foreground="#E5E7EB" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding CurrentScanningPath, Mode=OneWay}" FontSize="11" Foreground="#9CA3AF" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                        <TextBlock Text="Seleção Atual: " FontSize="11.5" Foreground="#9CA3AF" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding SelectedForCleanupSummaryText, Mode=OneWay}" FontSize="11.5" FontWeight="Bold" Foreground="#4ADE80" VerticalAlignment="Center" Margin="0,0,14,0" />
+                        <TextBlock Text="Sem Permissão: " FontSize="11.5" Foreground="#9CA3AF" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding AccessDeniedText, Mode=OneWay}" FontSize="11.5" FontWeight="SemiBold" Foreground="#FBBF24" VerticalAlignment="Center" Margin="0,0,14,0" />
+                        <TextBlock Text="Tempo: " FontSize="11.5" Foreground="#9CA3AF" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding ElapsedTimeText, Mode=OneWay}" FontSize="11.5" FontWeight="SemiBold" Foreground="#38BDF8" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Barra de progresso animada contínua durante qualquer operação em segundo plano -->
+                <ProgressBar IsIndeterminate="True"
+                             Height="4"
+                             Margin="0,6,0,0"
+                             Background="#262936"
+                             Foreground="#38BDF8"
+                             BorderThickness="0"
+                             Visibility="{Binding IsBusy, Mode=OneWay, Converter={StaticResource BoolToVis}}" />
+            </StackPanel>
+        </Border>
+
+        <!-- 5. Área Principal: Abas de Análise (Esquerda) + Painel de Inspeção de 10 Atributos (Direita) -->
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="405" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Abas Principais -->
+            <TabControl Grid.Column="0" Background="#181920" BorderBrush="#2B2E3B" BorderThickness="1" Margin="0,0,10,0">
+
+                <!-- ABA 1: Visão Geral, Mapa de Blocos Colorido por Risco e Árvore de Diretórios -->
+                <TabItem Header="Visão Geral" Padding="12,6">
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Distribuição Visual do Armazenamento -->
+                        <Grid Grid.Row="0" Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0" Background="#1C1F2B" BorderBrush="#2D3346" BorderThickness="1" CornerRadius="6" Padding="12,10" Margin="0,0,5,0">
+                                <StackPanel>
+                                    <TextBlock Text="DISTRIBUIÇÃO POR CATEGORIA" FontSize="11" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,6" />
+                                    <ItemsControl ItemsSource="{Binding CategorySlices}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,3">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="12" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="95" />
+                                                        <ColumnDefinition Width="78" />
+                                                        <ColumnDefinition Width="46" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Grid.Column="0" Width="8" Height="8" CornerRadius="2" Background="{Binding ColorHex, Mode=OneWay, Converter={StaticResource HexBrushConverter}}" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="1" Text="{Binding Label, Mode=OneWay}" FontSize="11.5" Foreground="#E5E7EB" TextTrimming="CharacterEllipsis" Margin="4,0,8,0" VerticalAlignment="Center" />
+                                                    <ProgressBar Grid.Column="2"
+                                                                 Value="{Binding PercentageOfScanned, Mode=OneWay}"
+                                                                 Maximum="100"
+                                                                 Height="5"
+                                                                 Background="#14161F"
+                                                                 Foreground="{Binding ColorHex, Mode=OneWay, Converter={StaticResource HexBrushConverter}}"
+                                                                 BorderThickness="0"
+                                                                 VerticalAlignment="Center"
+                                                                 Margin="0,0,8,0" />
+                                                    <TextBlock Grid.Column="3" Text="{Binding FormattedSize, Mode=OneWay}" FontSize="11.5" FontWeight="SemiBold" Foreground="#F9FAFB" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="4" Text="{Binding FormattedPercentage, Mode=OneWay}" FontSize="11" Foreground="#9CA3AF" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="1" Background="#1C1F2B" BorderBrush="#2D3346" BorderThickness="1" CornerRadius="6" Padding="12,10" Margin="5,0,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="DISTRIBUIÇÃO POR CLASSIFICAÇÃO DE RISCO" FontSize="11" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,6" />
+                                    <ItemsControl ItemsSource="{Binding RiskSlices}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,3.5">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="12" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="95" />
+                                                        <ColumnDefinition Width="78" />
+                                                        <ColumnDefinition Width="46" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Grid.Column="0" Width="8" Height="8" CornerRadius="2" Background="{Binding ColorHex, Mode=OneWay, Converter={StaticResource HexBrushConverter}}" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="1" Text="{Binding Label, Mode=OneWay}" FontSize="11.5" Foreground="#E5E7EB" TextTrimming="CharacterEllipsis" Margin="4,0,8,0" VerticalAlignment="Center" />
+                                                    <ProgressBar Grid.Column="2"
+                                                                 Value="{Binding PercentageOfScanned, Mode=OneWay}"
+                                                                 Maximum="100"
+                                                                 Height="5"
+                                                                 Background="#14161F"
+                                                                 Foreground="{Binding ColorHex, Mode=OneWay, Converter={StaticResource HexBrushConverter}}"
+                                                                 BorderThickness="0"
+                                                                 VerticalAlignment="Center"
+                                                                 Margin="0,0,8,0" />
+                                                    <TextBlock Grid.Column="3" Text="{Binding FormattedSize, Mode=OneWay}" FontSize="11.5" FontWeight="SemiBold" Foreground="#F9FAFB" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="4" Text="{Binding FormattedPercentage, Mode=OneWay}" FontSize="11" Foreground="#9CA3AF" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <!-- Diferencial 2: Mapa de Blocos Colorido por Risco ("Posso apagar?") — sem Viewbox para manter fontes 1:1 nítidas -->
+                        <Border Grid.Row="1" Background="#161821" BorderBrush="#2D3346" BorderThickness="1" CornerRadius="6" Padding="12,9" Margin="0,0,0,8">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,7">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="MAPA DE BLOCOS COLORIDO POR RISCO"
+                                                   FontSize="11.5" FontWeight="Bold" Foreground="#38BDF8" VerticalAlignment="Center" />
+                                        <TextBlock Text="  •  Clique em qualquer bloco para inspecionar detalhes à direita (passe o mouse para ver o caminho)"
+                                                   FontSize="11" Foreground="#9CA3AF" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Border Width="10" Height="10" CornerRadius="2" Background="#22C55E" Margin="0,0,4,0" />
+                                        <TextBlock Text="Verde (Seguro)" FontSize="10.5" Foreground="#D1FAE5" Margin="0,0,10,0" />
+                                        <Border Width="10" Height="10" CornerRadius="2" Background="#EAB308" Margin="0,0,4,0" />
+                                        <TextBlock Text="Amarelo (Atenção)" FontSize="10.5" Foreground="#FEF08A" Margin="0,0,10,0" />
+                                        <Border Width="10" Height="10" CornerRadius="2" Background="#EF4444" Margin="0,0,4,0" />
+                                        <TextBlock Text="Vermelho (Dados/VMs)" FontSize="10.5" Foreground="#FECACA" Margin="0,0,10,0" />
+                                        <Border Width="10" Height="10" CornerRadius="2" Background="#64748B" Margin="0,0,4,0" />
+                                        <TextBlock Text="Cinza (Sistema/Outros)" FontSize="10.5" Foreground="#CBD5E1" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <Border x:Name="TreemapHost"
+                                        Height="196"
+                                        Background="#11131A"
+                                        CornerRadius="5"
+                                        ClipToBounds="True"
+                                        SizeChanged="TreemapHost_SizeChanged">
+                                    <ItemsControl ItemsSource="{Binding RiskTreemapBlocks}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <Canvas Background="Transparent" ClipToBounds="True" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemContainerStyle>
+                                            <Style TargetType="ContentPresenter">
+                                                <Setter Property="Canvas.Left" Value="{Binding X, Mode=OneWay}" />
+                                                <Setter Property="Canvas.Top" Value="{Binding Y, Mode=OneWay}" />
+                                            </Style>
+                                        </ItemsControl.ItemContainerStyle>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Width="{Binding Width, Mode=OneWay}"
+                                                        Height="{Binding Height, Mode=OneWay}"
+                                                        Padding="8,5"
+                                                        HorizontalContentAlignment="Left"
+                                                        VerticalContentAlignment="Top"
+                                                        Background="{Binding BackgroundHex, Mode=OneWay, Converter={StaticResource HexBrushConverter}}"
+                                                        BorderBrush="{Binding BorderHex, Mode=OneWay, Converter={StaticResource HexBrushConverter}}"
+                                                        BorderThickness="1.2"
+                                                        Command="{Binding DataContext.SelectTreemapBlockCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip="{Binding TooltipText, Mode=OneWay}">
+                                                    <StackPanel ClipToBounds="True">
+                                                        <TextBlock Text="{Binding Label, Mode=OneWay}"
+                                                                   Foreground="#FFFFFF"
+                                                                   FontSize="12"
+                                                                   FontWeight="Bold"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   Visibility="{Binding ShowTitle, Mode=OneWay, Converter={StaticResource BoolToVis}}" />
+                                                        <TextBlock Text="{Binding DisplaySubtitle, Mode=OneWay}"
+                                                                   Foreground="{Binding TextHex, Mode=OneWay, Converter={StaticResource HexBrushConverter}}"
+                                                                   FontSize="11"
+                                                                   FontWeight="SemiBold"
+                                                                   Margin="0,1,0,0"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   Visibility="{Binding ShowSize, Mode=OneWay, Converter={StaticResource BoolToVis}}" />
+                                                        <TextBlock Text="{Binding ShortRiskBadge, Mode=OneWay}"
+                                                                   Foreground="#CBD5E1"
+                                                                   FontSize="10"
+                                                                   Margin="0,2,0,0"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   Visibility="{Binding ShowBadge, Mode=OneWay, Converter={StaticResource BoolToVis}}" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Visualização Hierárquica dos Diretórios -->
+                        <Border Grid.Row="2" Background="#15161C" BorderBrush="#2B2E3B" BorderThickness="1" CornerRadius="6" Padding="6">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="EXPLORADOR HIERÁRQUICO DE DIRETÓRIOS (clique em uma pasta para ver os detalhes à direita)"
+                                           FontSize="11" FontWeight="Bold" Foreground="#9CA3AF" Margin="6,4,6,8" />
+
+                                <TreeView Grid.Row="1"
+                                          ItemsSource="{Binding RootTreeNodes}"
+                                          Background="Transparent"
+                                          BorderThickness="0"
+                                          SelectedItemChanged="DirectoryTree_SelectedItemChanged">
+                                    <TreeView.ItemContainerStyle>
+                                        <Style TargetType="TreeViewItem">
+                                            <Setter Property="IsExpanded" Value="{Binding IsExpandedByDefault, Mode=OneWay}" />
+                                            <Setter Property="Foreground" Value="#E5E7EB" />
+                                            <Setter Property="Padding" Value="4,3" />
+                                        </Style>
+                                    </TreeView.ItemContainerStyle>
+                                    <TreeView.Resources>
+                                        <HierarchicalDataTemplate DataType="{x:Type models:StorageItem}" ItemsSource="{Binding Children}">
+                                            <StackPanel Orientation="Horizontal" Margin="0,2">
+                                                <CheckBox IsChecked="{Binding IsSelectedForCleanup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                          IsEnabled="{Binding CanSelectForCleanup, Mode=OneWay}"
+                                                          VerticalAlignment="Center"
+                                                          Margin="0,0,8,0"
+                                                          ToolTip="Marcar para limpeza (disponível apenas para itens Verdes/Amarelos)" />
+
+                                                <Border Background="{Binding RiskClassification, Mode=OneWay, Converter={StaticResource RiskBgConverter}}"
+                                                        CornerRadius="3"
+                                                        Padding="6,1"
+                                                        Margin="0,0,8,0"
+                                                        VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding ShortRiskBadge, Mode=OneWay}"
+                                                               Foreground="{Binding RiskClassification, Mode=OneWay, Converter={StaticResource RiskFgConverter}}"
+                                                               FontSize="10.5"
+                                                               FontWeight="SemiBold" />
+                                                </Border>
+
+                                                <TextBlock Text="📁 " FontSize="12" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Name, Mode=OneWay}" FontWeight="SemiBold" FontSize="12.5" Foreground="#F9FAFB" VerticalAlignment="Center" Margin="0,0,10,0" />
+
+                                                <TextBlock Text="{Binding FormattedLogicalSize, Mode=OneWay}" FontWeight="Bold" FontSize="12" Foreground="#38BDF8" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                                <TextBlock Text="{Binding PercentageOfParent, Mode=OneWay, StringFormat=({0:0.0}% da pasta pai)}" FontSize="11" Foreground="#9CA3AF" VerticalAlignment="Center" Margin="0,0,10,0" />
+
+                                                <ProgressBar Value="{Binding PercentageOfParent, Mode=OneWay}" Maximum="100" Width="70" Height="6" Background="#262936" Foreground="#0284C7" BorderThickness="0" VerticalAlignment="Center" Margin="0,0,10,0" />
+
+                                                <TextBlock FontSize="11" Foreground="#6B7280" VerticalAlignment="Center">
+                                                    <Run Text="[" />
+                                                    <Run Text="{Binding FileCount, Mode=OneWay, StringFormat={}{0:N0} arq.}" />
+                                                    <Run Text=" | Alocado: " />
+                                                    <Run Text="{Binding FormattedAllocatedSize, Mode=OneWay}" />
+                                                    <Run Text="]" />
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </HierarchicalDataTemplate>
+                                    </TreeView.Resources>
+                                </TreeView>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </TabItem>
+
+                <!-- ABA 2: Maiores Pastas, Arquivos Mais Pesados, Pastas Densas e O Que Cresceu -->
+                <TabItem Header="Maiores Itens &amp; Crescimento" Padding="12,6">
+                    <Grid Margin="6">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Barra de Ação para Seleção Múltipla em Pastas/Arquivos -->
+                        <Border Grid.Row="0" Background="#1E2029" BorderBrush="#2D3140" BorderThickness="1" CornerRadius="6" Padding="10,7" Margin="0,0,0,6">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Dica: Selecione várias linhas com Shift+Clique ou Ctrl+Clique (ou pressione Espaço) e use:" VerticalAlignment="Center" FontSize="12" Foreground="#D1D5DB" Margin="0,0,12,0" />
+                                <Button Content="☑️ Marcar Destacados Elegíveis" Click="BtnCheckHighlighted_Click" Height="28" Margin="0,0,8,0" Background="#143323" Foreground="#4ADE80" BorderBrush="#22C55E" />
+                                <Button Content="⬜ Desmarcar Destacados" Click="BtnUncheckHighlighted_Click" Height="28" Margin="0,0,8,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <TabControl Grid.Row="1" Background="#15161C" BorderThickness="0">
+                            <TabItem Header="Pastas que Mais Consomem Espaço" Padding="10,5">
+                                <DataGrid x:Name="GridHeavyFolders"
+                                          ItemsSource="{Binding TopHeavyFolders}"
+                                          SelectedItem="{Binding SelectedInspectorItem}"
+                                          PreviewKeyDown="DataGrid_PreviewKeyDown">
+                                    <DataGrid.Columns>
+                                        <DataGridTemplateColumn Header="Limpar" Width="62">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox IsChecked="{Binding IsSelectedForCleanup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                              IsEnabled="{Binding CanSelectForCleanup, Mode=OneWay}"
+                                                              HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTemplateColumn Header="Risco" Width="150" IsReadOnly="True" SortMemberPath="RiskClassification">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="{Binding RiskClassification, Mode=OneWay, Converter={StaticResource RiskBgConverter}}" CornerRadius="4" Padding="6,2">
+                                                        <TextBlock Text="{Binding ShortRiskBadge, Mode=OneWay}" Foreground="{Binding RiskClassification, Mode=OneWay, Converter={StaticResource RiskFgConverter}}" FontSize="11" FontWeight="SemiBold" />
+                                                    </Border>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTextColumn Header="Pasta" Binding="{Binding Name, Mode=OneWay}" Width="190" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="Tamanho Lógico" Binding="{Binding FormattedLogicalSize, Mode=OneWay}" SortMemberPath="LogicalSizeBytes" Width="115" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="Alocado em Disco" Binding="{Binding FormattedAllocatedSize, Mode=OneWay}" SortMemberPath="AllocatedSizeBytes" Width="120" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="Arquivos" Binding="{Binding FileCount, Mode=OneWay, StringFormat={}{0:N0}}" SortMemberPath="FileCount" Width="90" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="Aplicativo / Componente" Binding="{Binding AssociatedAppOrComponent, Mode=OneWay}" Width="190" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="Caminho Completo" Binding="{Binding FullPath, Mode=OneWay}" Width="*" IsReadOnly="True" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </TabItem>
+
+                            <TabItem Header="Arquivos Individuais Mais Pesados" Padding="10,5">
+                                <DataGrid x:Name="GridHeavyFiles"
+                                          ItemsSource="{Binding TopHeavyFiles}"
+                                          SelectedItem="{Binding SelectedInspectorItem}"
+                                          PreviewKeyDown="DataGrid_PreviewKeyDown">
+                                    <DataGrid.Columns>
+                                        <DataGridTemplateColumn Header="Limpar" Width="62">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox IsChecked="{Binding IsSelectedForCleanup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                              IsEnabled="{Binding CanSelectForCleanup, Mode=OneWay}"
+                                                              HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTemplateColumn Header="Risco" Width="150" IsReadOnly="True" SortMemberPath="RiskClassification">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="{Binding RiskClassification, Mode=OneWay, Converter={StaticResource RiskBgConverter}}" CornerRadius="4" Padding="6,2">
+                                                        <TextBlock Text="{Binding ShortRiskBadge, Mode=OneWay}" Foreground="{Binding RiskClassification, Mode=OneWay, Converter={StaticResource RiskFgConverter}}" FontSize="11" FontWeight="SemiBold" />
+                                                    </Border>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTextColumn Header="Arquivo" Binding="{Binding Name, Mode=OneWay}" Width="210" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="Tamanho Lógico" Binding="{Binding FormattedLogicalSize, Mode=OneWay}" SortMemberPath="LogicalSizeBytes" Width="115" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="Alocado em Disco" Binding="{Binding FormattedAllocatedSize, Mode=OneWay}" SortMemberPath="AllocatedSizeBytes" Width="120" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="Última Modificação" Binding="{Binding FormattedLastModified, Mode=OneWay}" SortMemberPath="LastModifiedUtc" Width="130" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="Categoria" Binding="{Binding CategoryDisplayName, Mode=OneWay}" Width="180" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="Caminho Completo" Binding="{Binding FullPath, Mode=OneWay}" Width="*" IsReadOnly="True" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </TabItem>
+
+                            <TabItem Header="Diretórios com Milhares de Pequenos Arquivos" Padding="10,5">
+                                <DataGrid x:Name="GridDenseFolders"
+                                          ItemsSource="{Binding HighDensityFolders}"
+                                          SelectedItem="{Binding SelectedInspectorItem}"
+                                          PreviewKeyDown="DataGrid_PreviewKeyDown">
+                                    <DataGrid.Columns>
+                                        <DataGridTemplateColumn Header="Limpar" Width="62">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox IsChecked="{Binding IsSelectedForCleanup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                              IsEnabled="{Binding CanSelectForCleanup, Mode=OneWay}"
+                                                              HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTemplateColumn Header="Risco" Width="150" IsReadOnly="True" SortMemberPath="RiskClassification">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="{Binding RiskClassification, Mode=OneWay, Converter={StaticResource RiskBgConverter}}" CornerRadius="4" Padding="6,2">
+                                                        <TextBlock Text="{Binding ShortRiskBadge, Mode=OneWay}" Foreground="{Binding RiskClassification, Mode=OneWay, Converter={StaticResource RiskFgConverter}}" FontSize="11" FontWeight="SemiBold" />
+                                                    </Border>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTextColumn Header="Diretório" Binding="{Binding Name, Mode=OneWay}" Width="190" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="Arq. Pequenos (&lt;16 KB)" Binding="{Binding SmallFileCount, Mode=OneWay, StringFormat={}{0:N0}}" SortMemberPath="SmallFileCount" Width="150" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="Total de Arquivos" Binding="{Binding FileCount, Mode=OneWay, StringFormat={}{0:N0}}" SortMemberPath="FileCount" Width="125" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="Tamanho Lógico" Binding="{Binding FormattedLogicalSize, Mode=OneWay}" SortMemberPath="LogicalSizeBytes" Width="115" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="Espaço Alocado (Clusters)" Binding="{Binding FormattedAllocatedSize, Mode=OneWay}" SortMemberPath="AllocatedSizeBytes" Width="155" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="Caminho Completo" Binding="{Binding FullPath, Mode=OneWay}" Width="*" IsReadOnly="True" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </TabItem>
+
+                            <!-- Diferencial 3: O que cresceu desde a última análise -->
+                            <TabItem Header="📈 O Que Cresceu? (Variação)" Padding="10,5">
+                                <Grid Margin="4">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+                                    <Border Grid.Row="0" Background="#161C24" BorderBrush="#283548" BorderThickness="1" CornerRadius="6" Padding="10,7" Margin="0,0,0,6">
+                                        <TextBlock Text="{Binding GrowthComparisonBannerText, Mode=OneWay}" FontSize="12" Foreground="#38BDF8" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    </Border>
+                                    <DataGrid Grid.Row="1"
+                                              ItemsSource="{Binding GrowthDeltas}"
+                                              IsReadOnly="True"
+                                              SelectionChanged="GridGrowthDeltas_SelectionChanged">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Pasta" Binding="{Binding Name, Mode=OneWay}" Width="210" IsReadOnly="True" />
+                                            <DataGridTextColumn Header="Variação Detectada" Binding="{Binding SummaryBadge, Mode=OneWay}" SortMemberPath="DeltaBytes" Width="230" IsReadOnly="True" />
+                                            <DataGridTextColumn Header="Tamanho Anterior" Binding="{Binding FormattedPreviousSize, Mode=OneWay}" SortMemberPath="PreviousBytes" Width="130" IsReadOnly="True" />
+                                            <DataGridTextColumn Header="Tamanho Atual" Binding="{Binding FormattedCurrentSize, Mode=OneWay}" SortMemberPath="CurrentBytes" Width="130" IsReadOnly="True" />
+                                            <DataGridTextColumn Header="Diferença Bruta" Binding="{Binding FormattedDelta, Mode=OneWay}" SortMemberPath="DeltaBytes" Width="125" IsReadOnly="True" />
+                                            <DataGridTextColumn Header="Caminho Completo" Binding="{Binding FullPath, Mode=OneWay}" Width="*" IsReadOnly="True" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Grid>
+                            </TabItem>
+                        </TabControl>
+                    </Grid>
+                </TabItem>
+
+                <!-- ABA 3: Classificação de Risco & Limpeza Inteligente (com Achados por Grupo - Diferencial 1) -->
+                <TabItem Header="Limpeza" Padding="12,6">
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Diferencial 1: Cartões de Achados por Grupo (Resumo Semântico + 1 Clique) -->
+                        <Border Grid.Row="0" Background="#161822" BorderBrush="#2D3140" BorderThickness="1" CornerRadius="6" Padding="8,6" Margin="0,0,0,8">
+                            <StackPanel>
+                                <TextBlock Text="ACHADOS POR GRUPO (revise por categoria em vez de centenas de pastas soltas — clique em 'Marcar Grupo' ou 'Filtrar')"
+                                           FontSize="10.5" FontWeight="Bold" Foreground="#38BDF8" Margin="2,0,0,6" />
+                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                                    <ItemsControl ItemsSource="{Binding FindingGroups}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Width="270"
+                                                        Background="#1E202B"
+                                                        BorderBrush="#33384A"
+                                                        BorderThickness="1"
+                                                        CornerRadius="6"
+                                                        Padding="10,7"
+                                                        Margin="0,0,8,2">
+                                                    <StackPanel>
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Text="{Binding Title, Mode=OneWay}" FontSize="11.5" FontWeight="Bold" Foreground="#F9FAFB" TextTrimming="CharacterEllipsis" ToolTip="{Binding Title, Mode=OneWay}" />
+                                                            <TextBlock Grid.Column="1" Text="{Binding FormattedTotalSize, Mode=OneWay}" FontSize="12" FontWeight="Bold" Foreground="#38BDF8" Margin="6,0,0,0" />
+                                                        </Grid>
+                                                        <TextBlock FontSize="10.5" Foreground="#9CA3AF" Margin="0,2,0,4">
+                                                            <Run Text="{Binding ShortRiskBadge, Mode=OneWay}" FontWeight="SemiBold" />
+                                                            <Run Text=" • " />
+                                                            <Run Text="{Binding ItemCountLabel, Mode=OneWay}" />
+                                                        </TextBlock>
+                                                        <TextBlock Text="{Binding Explanation, Mode=OneWay}" FontSize="10.5" Foreground="#D1D5DB" TextTrimming="CharacterEllipsis" ToolTip="{Binding Explanation, Mode=OneWay}" Margin="0,0,0,6" />
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <Button Content="☑️ Marcar Grupo"
+                                                                    Command="{Binding DataContext.SelectFindingGroupCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                    CommandParameter="{Binding}"
+                                                                    Height="24"
+                                                                    Padding="8,0"
+                                                                    FontSize="10.5"
+                                                                    Background="#143323"
+                                                                    Foreground="#4ADE80"
+                                                                    BorderBrush="#22C55E"
+                                                                    Margin="0,0,6,0" />
+                                                            <Button Content="🔍 Filtrar Tabela"
+                                                                    Command="{Binding DataContext.FilterByFindingGroupCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                    CommandParameter="{Binding}"
+                                                                    Height="24"
+                                                                    Padding="8,0"
+                                                                    FontSize="10.5" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Barra de Filtro por Risco e Busca -->
+                        <Border Grid.Row="1" Background="#1E2029" BorderBrush="#2D3140" BorderThickness="1" CornerRadius="6" Padding="10,7" Margin="0,0,0,8">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="260" />
+                                    <ColumnDefinition Width="280" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                    <TextBlock Text="FILTRAR POR CLASSIFICAÇÃO DE RISCO" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,3" />
+                                    <ComboBox ItemsSource="{Binding RiskFilterOptions}" SelectedItem="{Binding SelectedRiskFilter}" Height="30" VerticalContentAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                                    <TextBlock Text="BUSCAR POR NOME, CAMINHO OU APLICATIVO" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,3" />
+                                    <TextBox Text="{Binding FindingsSearchQuery, UpdateSourceTrigger=PropertyChanged}" Height="30" Background="#14161D" Foreground="#F3F4F6" BorderBrush="#3B4054" VerticalContentAlignment="Center" Padding="8,0" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="2"
+                                           VerticalAlignment="Center"
+                                           FontSize="11.5"
+                                           Foreground="#9CA3AF"
+                                           TextWrapping="Wrap"
+                                           Text="Dica: Você pode selecionar por grupo acima, usar os botões rápidos abaixo, ou selecionar várias linhas na tabela (Shift+Clique / Ctrl+Clique) e pressionar ESPAÇO." />
+                            </Grid>
+                        </Border>
+
+                        <!-- Barra Dedicada de Seleção em Massa (Um Clique) -->
+                        <Border Grid.Row="2" Background="#161C24" BorderBrush="#283548" BorderThickness="1" CornerRadius="6" Padding="10,7" Margin="0,0,0,8">
+                            <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="SELEÇÃO EM MASSA:" FontSize="11" FontWeight="Bold" Foreground="#38BDF8" VerticalAlignment="Center" Margin="0,0,10,0" />
+
+                                <Button Command="{Binding SelectAllSafeGreenCommand}"
+                                        Content="✅ Marcar Todos os Verdes (Baixo Risco)"
+                                        Height="28"
+                                        Margin="0,0,8,0"
+                                        Background="#143323"
+                                        Foreground="#4ADE80"
+                                        FontWeight="SemiBold"
+                                        BorderBrush="#22C55E" />
+
+                                <Button Command="{Binding SelectAllYellowCommand}"
+                                        Content="⚠️ Marcar Todos os Amarelos (Atenção)"
+                                        Height="28"
+                                        Margin="0,0,8,0"
+                                        Background="#332814"
+                                        Foreground="#FACC15"
+                                        FontWeight="SemiBold"
+                                        BorderBrush="#EAB308" />
+
+                                <Button Command="{Binding SelectAllFilteredCommand}"
+                                        Content="☑️ Marcar Todos Visíveis no Filtro"
+                                        Height="28"
+                                        Margin="0,0,8,0"
+                                        Background="#1E293B"
+                                        Foreground="#38BDF8"
+                                        BorderBrush="#0284C7" />
+
+                                <Button Command="{Binding UnselectAllFilteredCommand}"
+                                        Content="⬜ Desmarcar Visíveis no Filtro"
+                                        Height="28"
+                                        Margin="0,0,8,0" />
+
+                                <Button Content="✔️ Marcar Linhas Destacadas (Shift/Ctrl)"
+                                        Click="BtnCheckHighlightedFindings_Click"
+                                        Height="28"
+                                        Margin="0,0,8,0" />
+
+                                <Button Command="{Binding ClearSelectionCommand}"
+                                        Content="❌ Desmarcar Tudo"
+                                        Height="28"
+                                        Margin="0,0,12,0" />
+
+                                <Button Command="{Binding OpenCleanupPreviewCommand}"
+                                        Content="{Binding CleanActionButtonText, Mode=OneWay}"
+                                        Height="28"
+                                        Background="#15803D"
+                                        Foreground="White"
+                                        FontWeight="Bold"
+                                        BorderBrush="#22C55E" />
+                            </WrapPanel>
+                        </Border>
+
+                        <DataGrid Grid.Row="3"
+                                  x:Name="GridFindings"
+                                  ItemsSource="{Binding FilteredFindings}"
+                                  SelectedItem="{Binding SelectedInspectorItem}"
+                                  PreviewKeyDown="DataGrid_PreviewKeyDown">
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Width="70">
+                                    <DataGridTemplateColumn.Header>
+                                        <CheckBox ToolTip="Marcar / Desmarcar todos os itens elegíveis visíveis na tabela"
+                                                  Checked="ChkHeaderSelectAllFindings_Checked"
+                                                  Unchecked="ChkHeaderSelectAllFindings_Unchecked" />
+                                    </DataGridTemplateColumn.Header>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <CheckBox IsChecked="{Binding IsSelectedForCleanup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      IsEnabled="{Binding CanSelectForCleanup, Mode=OneWay}"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="Classificação de Risco" Width="155" IsReadOnly="True" SortMemberPath="RiskClassification">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{Binding RiskClassification, Mode=OneWay, Converter={StaticResource RiskBgConverter}}" CornerRadius="4" Padding="6,2">
+                                                <TextBlock Text="{Binding ShortRiskBadge, Mode=OneWay}" Foreground="{Binding RiskClassification, Mode=OneWay, Converter={StaticResource RiskFgConverter}}" FontSize="11" FontWeight="SemiBold" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Item" Binding="{Binding Name, Mode=OneWay}" Width="180" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Tamanho" Binding="{Binding FormattedLogicalSize, Mode=OneWay}" SortMemberPath="LogicalSizeBytes" Width="100" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Categoria" Binding="{Binding CategoryDisplayName, Mode=OneWay}" Width="195" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Aplicativo / Componente" Binding="{Binding AssociatedAppOrComponent, Mode=OneWay}" Width="185" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Ação Recomendada" Binding="{Binding RecommendationDisplayName, Mode=OneWay}" Width="210" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Caminho Completo" Binding="{Binding FullPath, Mode=OneWay}" Width="*" IsReadOnly="True" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+
+                <!-- ABA 4: Análise Especial do AppData (com Catálogo Expandido e Filtro de Desinstalados - Diferencial 8) -->
+                <TabItem Header="Raio-X do AppData" Padding="12,6">
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="195" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Cartões de Resumo do AppData -->
+                        <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,8">
+                            <Border Background="#1E2029" BorderBrush="#2D3140" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,6,0">
+                                <StackPanel>
+                                    <TextBlock Text="APPDATA\LOCAL" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" />
+                                    <TextBlock Text="{Binding AppDataLocalTotalText, Mode=OneWay}" FontSize="17" FontWeight="Bold" Foreground="#38BDF8" />
+                                    <TextBlock Text="Caches pesados, dados locais, pacotes e VMs" FontSize="11" Foreground="#9CA3AF" />
+                                </StackPanel>
+                            </Border>
+                            <Border Background="#1E2029" BorderBrush="#2D3140" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,6,0">
+                                <StackPanel>
+                                    <TextBlock Text="APPDATA\ROAMING" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" />
+                                    <TextBlock Text="{Binding AppDataRoamingTotalText, Mode=OneWay}" FontSize="17" FontWeight="Bold" Foreground="#A78BFA" />
+                                    <TextBlock Text="Perfis, configurações, sessões e Electron" FontSize="11" Foreground="#9CA3AF" />
+                                </StackPanel>
+                            </Border>
+                            <Border Background="#1E2029" BorderBrush="#2D3140" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,6,0">
+                                <StackPanel>
+                                    <TextBlock Text="APPDATA\LOCALLOW" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" />
+                                    <TextBlock Text="{Binding AppDataLocalLowTotalText, Mode=OneWay}" FontSize="17" FontWeight="Bold" Foreground="#FBBF24" />
+                                    <TextBlock Text="Dados de baixa integridade / jogos Unity" FontSize="11" Foreground="#9CA3AF" />
+                                </StackPanel>
+                            </Border>
+                            <Border Background="#17251F" BorderBrush="#22C55E" BorderThickness="1" CornerRadius="6" Padding="10">
+                                <StackPanel>
+                                    <TextBlock Text="CACHES DESCARTÁVEIS NO APPDATA" FontSize="10" FontWeight="Bold" Foreground="#86EFAC" />
+                                    <TextBlock Text="{Binding AppDataSafeCacheTotalText, Mode=OneWay}" FontSize="17" FontWeight="Bold" Foreground="#4ADE80" />
+                                    <TextBlock Text="Subpastas verificadas seguras para limpar" FontSize="11" Foreground="#D1FAE5" />
+                                </StackPanel>
+                            </Border>
+                        </UniformGrid>
+
+                        <!-- Filtro de Escopo e Botão de Seleção Rápida de Caches do AppData -->
+                        <Border Grid.Row="1" Background="#271B1D" BorderBrush="#EF4444" BorderThickness="1" CornerRadius="6" Padding="10,7" Margin="0,0,0,8">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="280" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ComboBox Grid.Column="0" ItemsSource="{Binding AppDataScopeFilterOptions}" SelectedItem="{Binding SelectedAppDataScopeFilter}" Height="28" VerticalContentAlignment="Center" Margin="0,0,12,0" />
+                                <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="11.5" Foreground="#FECACA" TextWrapping="Wrap" Margin="0,0,12,0"
+                                           Text="IMPORTANTE: Apagar pastas-raiz do AppData causa perda de login, sessões e bancos locais. Use o botão ao lado para marcar APENAS as subpastas de Cache descartáveis verificadas!" />
+                                <Button Grid.Column="2"
+                                        Command="{Binding SelectAllAppDataSafeCachesCommand}"
+                                        Content="✅ Marcar Todos os Caches Seguros do AppData"
+                                        Height="30"
+                                        Background="#143323"
+                                        Foreground="#4ADE80"
+                                        FontWeight="SemiBold"
+                                        BorderBrush="#22C55E" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Tabela Principal de Aplicativos no AppData -->
+                        <DataGrid Grid.Row="2"
+                                  ItemsSource="{Binding FilteredAppDataEntries}"
+                                  SelectedItem="{Binding SelectedAppDataEntry}"
+                                  IsReadOnly="True"
+                                  Margin="0,0,0,8">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Escopo" Binding="{Binding ScopeDisplayName, Mode=OneWay}" Width="125" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Aplicativo Identificado" Binding="{Binding IdentifiedApplication, Mode=OneWay}" Width="210" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Natureza dos Dados" Binding="{Binding NatureDisplayName, Mode=OneWay}" Width="190" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Consumo Total" Binding="{Binding FormattedTotalSize, Mode=OneWay}" SortMemberPath="TotalLogicalBytes" Width="110" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Cache Descartável" Binding="{Binding FormattedSafeCacheSize, Mode=OneWay}" SortMemberPath="SafeDisposableCacheBytes" Width="125" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Dados Persistentes" Binding="{Binding FormattedPersistentSize, Mode=OneWay}" SortMemberPath="PersistentOrSensitiveBytes" Width="125" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Explicação e Orientação" Binding="{Binding ExplanationAndGuidance, Mode=OneWay}" Width="*" IsReadOnly="True" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <!-- Subpainel: Subpastas de Cache Descartáveis do Aplicativo Selecionado no AppData -->
+                        <Border Grid.Row="3" Background="#1A1C24" BorderBrush="#2B2E3B" BorderThickness="1" CornerRadius="6" Padding="8">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" FontSize="11" FontWeight="Bold" Foreground="#86EFAC" Margin="2,0,0,6"
+                                           Text="SUBPASTAS DE CACHE COMPROVADAMENTE DESCARTÁVEIS DENTRO DO APLICATIVO SELECIONADO (Feche o aplicativo antes de limpar):" />
+                                <DataGrid Grid.Row="1"
+                                          ItemsSource="{Binding SelectedAppDataEntry.SafeCacheSubdirectories}"
+                                          SelectedItem="{Binding SelectedInspectorItem}"
+                                          PreviewKeyDown="DataGrid_PreviewKeyDown">
+                                    <DataGrid.Columns>
+                                        <DataGridTemplateColumn Header="Limpar" Width="62">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox IsChecked="{Binding IsSelectedForCleanup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                              IsEnabled="{Binding CanSelectForCleanup, Mode=OneWay}"
+                                                              HorizontalAlignment="Center" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTextColumn Header="Subpasta de Cache" Binding="{Binding Name, Mode=OneWay}" Width="160" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="Tamanho" Binding="{Binding FormattedLogicalSize, Mode=OneWay}" SortMemberPath="LogicalSizeBytes" Width="105" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="Risco" Binding="{Binding ShortRiskBadge, Mode=OneWay}" Width="150" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="Caminho Completo da Subpasta" Binding="{Binding FullPath, Mode=OneWay}" Width="*" IsReadOnly="True" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </TabItem>
+
+                <!-- ABA 5: Desenvolvimento, Projetos Parados (> 90d), Comandos Oficiais em 1 Clique e Docker/WSL2 -->
+                <TabItem Header="Desenvolvimento" Padding="12,6">
+                    <Grid Margin="6">
+                        <TabControl Background="#15161C" BorderThickness="0">
+                            <!-- Sub-aba 1: Projetos Detectados & Parados (Diferencial 5) -->
+                            <TabItem Header="📦 Projetos &amp; Inatividade (&gt; 90 dias)" Padding="10,5">
+                                <Grid Margin="6">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+                                    <Border Grid.Row="0" Background="#1E2029" BorderBrush="#2D3140" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox Grid.Column="0"
+                                                      IsChecked="{Binding OnlyDormantProjectsOver90Days}"
+                                                      Content="Apenas projetos parados há mais de 90 dias"
+                                                      Foreground="#38BDF8"
+                                                      FontWeight="SemiBold"
+                                                      VerticalAlignment="Center"
+                                                      Margin="0,0,16,0" />
+                                            <TextBlock Grid.Column="1"
+                                                       VerticalAlignment="Center"
+                                                       FontSize="11.5"
+                                                       Foreground="#D1D5DB"
+                                                       TextWrapping="Wrap"
+                                                       Margin="0,0,12,0"
+                                                       Text="Agrupa node_modules, bin/obj, target e .venv por projeto e verifica a data real da última alteração no código-fonte." />
+                                            <Button Grid.Column="2"
+                                                    Command="{Binding SelectAllDormantProjectsCommand}"
+                                                    Content="🧹 Marcar Todos os Projetos Parados (&gt; 90 dias)"
+                                                    Height="30"
+                                                    Background="#143323"
+                                                    Foreground="#4ADE80"
+                                                    FontWeight="SemiBold"
+                                                    BorderBrush="#22C55E" />
+                                        </Grid>
+                                    </Border>
+
+                                    <DataGrid Grid.Row="1"
+                                              ItemsSource="{Binding FilteredDeveloperProjects}"
+                                              SelectedItem="{Binding SelectedDeveloperProject}"
+                                              IsReadOnly="True">
+                                        <DataGrid.Columns>
+                                            <DataGridTemplateColumn Header="Ação" Width="135">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <Button Content="☑️ Marcar Projeto"
+                                                                Command="{Binding DataContext.SelectProjectArtifactsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                CommandParameter="{Binding}"
+                                                                Height="24"
+                                                                Padding="8,0"
+                                                                FontSize="11"
+                                                                Background="#1E293B"
+                                                                Foreground="#38BDF8"
+                                                                BorderBrush="#0284C7" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTextColumn Header="Status de Atividade" Binding="{Binding ActivityStatusBadge, Mode=OneWay}" SortMemberPath="InactiveDays" Width="195" IsReadOnly="True" />
+                                            <DataGridTextColumn Header="Projeto" Binding="{Binding ProjectName, Mode=OneWay}" Width="170" IsReadOnly="True" />
+                                            <DataGridTextColumn Header="Ecossistema(s)" Binding="{Binding EcosystemsSummary, Mode=OneWay}" Width="140" IsReadOnly="True" />
+                                            <DataGridTextColumn Header="Artefatos Total" Binding="{Binding FormattedTotalSize, Mode=OneWay}" SortMemberPath="TotalArtifactBytes" Width="115" IsReadOnly="True" />
+                                            <DataGridTextColumn Header="Marcável Direto" Binding="{Binding FormattedReclaimableSize, Mode=OneWay}" SortMemberPath="ReclaimableArtifactBytes" Width="115" IsReadOnly="True" />
+                                            <DataGridTextColumn Header="Último Código Editado" Binding="{Binding FormattedLastActivity, Mode=OneWay}" SortMemberPath="LastSourceActivityUtc" Width="135" IsReadOnly="True" />
+                                            <DataGridTextColumn Header="Pastas de Build / Dependências" Binding="{Binding ArtifactNamesSummary, Mode=OneWay}" Width="240" IsReadOnly="True" />
+                                            <DataGridTextColumn Header="Caminho do Projeto" Binding="{Binding ProjectRootPath, Mode=OneWay}" Width="*" IsReadOnly="True" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Grid>
+                            </TabItem>
+
+                            <!-- Sub-aba 2: Todos os Caches Globais, Builds e Comandos Oficiais em 1 Clique (Diferencial 4) -->
+                            <TabItem Header="🛠️ Caches Globais, Builds &amp; Docker/WSL2" Padding="10,5">
+                                <Grid Margin="6">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+
+                                    <Border Grid.Row="0" Background="#1E2029" BorderBrush="#2D3140" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" FontSize="11.5" Foreground="#D1D5DB" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0"
+                                                       Text="Caches globais (npm, pnpm, Yarn, pip, NuGet, Gradle, Cargo) e artefatos de compilação (bin/obj, target) trazem o botão '⚡ Executar' para rodar a ferramenta oficial medindo o espaço antes e depois. Discos virtuais (.vhdx) do Docker/WSL2 permanecem protegidos." />
+                                            <Button Grid.Column="1"
+                                                    Command="{Binding SelectAllDevCachesCommand}"
+                                                    Content="✅ Marcar Todos Caches/Builds Elegíveis"
+                                                    Height="30"
+                                                    Background="#332814"
+                                                    Foreground="#FACC15"
+                                                    FontWeight="SemiBold"
+                                                    BorderBrush="#EAB308" />
+                                        </Grid>
+                                    </Border>
+
+                                    <DataGrid Grid.Row="1"
+                                              ItemsSource="{Binding DeveloperArtifacts}"
+                                              SelectedItem="{Binding SelectedDevArtifact}">
+                                        <DataGrid.Columns>
+                                            <DataGridTemplateColumn Header="Limpar" Width="62">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <CheckBox IsChecked="{Binding UnderlyingItem.IsSelectedForCleanup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                  IsEnabled="{Binding UnderlyingItem.CanSelectForCleanup, Mode=OneWay}"
+                                                                  HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTemplateColumn Header="1 Clique Oficial" Width="125">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <Button Content="⚡ Executar"
+                                                                Command="{Binding DataContext.ExecuteOfficialCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                CommandParameter="{Binding}"
+                                                                Height="24"
+                                                                Padding="8,0"
+                                                                FontSize="11"
+                                                                Background="#1E293B"
+                                                                Foreground="#38BDF8"
+                                                                BorderBrush="#0284C7"
+                                                                ToolTip="Executa o comando oficial desta ferramenta e mede o espaço antes e depois" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTemplateColumn Header="Risco" Width="150" IsReadOnly="True" SortMemberPath="RiskClassification">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <Border Background="{Binding RiskClassification, Mode=OneWay, Converter={StaticResource RiskBgConverter}}" CornerRadius="4" Padding="6,2">
+                                                            <TextBlock Text="{Binding RiskBadge, Mode=OneWay}" Foreground="{Binding RiskClassification, Mode=OneWay, Converter={StaticResource RiskFgConverter}}" FontSize="11" FontWeight="SemiBold" />
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTextColumn Header="Ecossistema" Binding="{Binding Ecosystem, Mode=OneWay}" Width="145" IsReadOnly="True" />
+                                            <DataGridTextColumn Header="Tipo de Componente" Binding="{Binding ArtifactKind, Mode=OneWay}" Width="195" IsReadOnly="True" />
+                                            <DataGridTextColumn Header="Tamanho Lógico" Binding="{Binding FormattedSize, Mode=OneWay}" SortMemberPath="LogicalSizeBytes" Width="110" IsReadOnly="True" />
+                                            <DataGridTextColumn Header="Alocado" Binding="{Binding FormattedAllocatedSize, Mode=OneWay}" SortMemberPath="AllocatedSizeBytes" Width="105" IsReadOnly="True" />
+                                            <DataGridTextColumn Header="Comando Oficial Recomendado" Binding="{Binding OfficialCliCommand, Mode=OneWay}" Width="210" IsReadOnly="True" />
+                                            <DataGridTextColumn Header="Caminho Completo" Binding="{Binding FullPath, Mode=OneWay}" Width="*" IsReadOnly="True" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Grid>
+                            </TabItem>
+                        </TabControl>
+                    </Grid>
+                </TabItem>
+
+                <!-- ABA 6: Liberar Espaço Sem Apagar (Diferencial 6) -->
+                <TabItem Header="Liberar Sem Apagar" Padding="12,6">
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" Background="#17251F" BorderBrush="#22C55E" BorderThickness="1" CornerRadius="6" Padding="12,9" Margin="0,0,0,8">
+                            <StackPanel>
+                                <TextBlock Text="RECUPERAÇÃO NÃO-DESTRUTIVA DE ESPAÇO (NENHUM ARQUIVO É APAGADO)" FontSize="11" FontWeight="Bold" Foreground="#86EFAC" />
+                                <TextBlock FontSize="12" Foreground="#D1FAE5" TextWrapping="Wrap" Margin="0,2,0,0"
+                                           Text="Compacte blocos vazios de discos virtuais (.vhdx) do WSL2/Docker, aplique compressão transparente do NTFS (compact.exe) em pastas densas pouco usadas ou desidrate caches locais do OneDrive mantendo os arquivos seguros na nuvem." />
+                            </StackPanel>
+                        </Border>
+
+                        <DataGrid Grid.Row="1"
+                                  ItemsSource="{Binding NonDestructiveOptions}"
+                                  IsReadOnly="True">
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Header="Ação (1 Clique)" Width="145">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Content="⚡ Otimizar Agora"
+                                                    Command="{Binding DataContext.ExecuteNonDestructiveOptionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}"
+                                                    Height="24"
+                                                    Padding="8,0"
+                                                    FontSize="11"
+                                                    Background="#143323"
+                                                    Foreground="#4ADE80"
+                                                    FontWeight="SemiBold"
+                                                    BorderBrush="#22C55E" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Modalidade" Binding="{Binding CategoryLabel, Mode=OneWay}" Width="180" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Otimização Recomendada" Binding="{Binding Title, Mode=OneWay}" Width="230" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Tamanho Atual" Binding="{Binding FormattedCurrentSize, Mode=OneWay}" SortMemberPath="CurrentAllocatedBytes" Width="115" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Economia Estimada" Binding="{Binding FormattedEstimatedSavings, Mode=OneWay}" SortMemberPath="EstimatedSavingsBytes" Width="130" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Garantia de Segurança" Binding="{Binding SafetyGuarantee, Mode=OneWay}" Width="260" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Comando Oficial" Binding="{Binding CommandPreview, Mode=OneWay}" Width="220" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Caminho Alvo" Binding="{Binding TargetPath, Mode=OneWay}" Width="*" IsReadOnly="True" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+
+                <!-- ABA 7: Detecção de Arquivos Duplicados por Hash SHA-256 -->
+                <TabItem Header="Duplicados" Padding="12,6">
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="210" />
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" Background="#1E2029" BorderBrush="#2D3140" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,8">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="210" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <ComboBox Grid.Column="0" ItemsSource="{Binding DuplicateMinSizeOptions}" SelectedItem="{Binding SelectedDuplicateMinSizeOption}" Height="32" VerticalContentAlignment="Center" Margin="0,0,10,0" />
+                                <Button Grid.Column="1"
+                                        Command="{Binding RunDuplicateScanCommand}"
+                                        Content="🔍 Analisar Duplicados (SHA-256)"
+                                        Height="32"
+                                        Padding="14,0"
+                                        Background="#0284C7"
+                                        Foreground="White"
+                                        FontWeight="SemiBold"
+                                        BorderBrush="#38BDF8"
+                                        Margin="0,0,10,0" />
+                                <Button Grid.Column="2"
+                                        Command="{Binding SelectAllDuplicateCopiesCommand}"
+                                        Content="✅ Marcar Todas as Cópias Extras (Mantendo 1 Original)"
+                                        Height="32"
+                                        Padding="12,0"
+                                        Background="#143323"
+                                        Foreground="#4ADE80"
+                                        FontWeight="SemiBold"
+                                        BorderBrush="#22C55E"
+                                        Margin="0,0,12,0" />
+                                <TextBlock Grid.Column="3" Text="{Binding DuplicateStatusText, Mode=OneWay}" VerticalAlignment="Center" FontSize="12" Foreground="#D1D5DB" TextWrapping="Wrap" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Lista de Grupos de Duplicados -->
+                        <DataGrid Grid.Row="1"
+                                  x:Name="GridDuplicateGroups"
+                                  ItemsSource="{Binding DuplicateGroups}"
+                                  IsReadOnly="True"
+                                  Margin="0,0,0,8">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Arquivo Representativo" Binding="{Binding RepresentativeName, Mode=OneWay}" Width="230" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Cópias Idênticas" Binding="{Binding CopyCount, Mode=OneWay}" SortMemberPath="CopyCount" Width="115" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Tamanho Unitário" Binding="{Binding FormattedFileSize, Mode=OneWay}" SortMemberPath="FileSizeBytes" Width="125" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Espaço Recuperável" Binding="{Binding FormattedReclaimableSize, Mode=OneWay}" SortMemberPath="ReclaimableBytes" Width="140" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Hash Criptográfico SHA-256" Binding="{Binding Sha256Hash, Mode=OneWay}" Width="*" IsReadOnly="True" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <!-- Cópias Individuais dentro do Grupo Selecionado -->
+                        <Border Grid.Row="2" Background="#1A1C24" BorderBrush="#2B2E3B" BorderThickness="1" CornerRadius="6" Padding="8">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" FontSize="11" FontWeight="Bold" Foreground="#9CA3AF" Margin="2,0,0,6"
+                                           Text="CÓPIAS DO GRUPO SELECIONADO (A cópia mais antiga é travada como Original Protegido para evitar perda total do arquivo):" />
+                                <DataGrid Grid.Row="1"
+                                          ItemsSource="{Binding ElementName=GridDuplicateGroups, Path=SelectedItem.Entries}"
+                                          SelectedItem="{Binding SelectedDuplicateEntry}">
+                                    <DataGrid.Columns>
+                                        <DataGridTemplateColumn Header="Limpar" Width="62">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox IsChecked="{Binding StorageItem.IsSelectedForCleanup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                              IsEnabled="{Binding StorageItem.CanSelectForCleanup, Mode=OneWay}"
+                                                              HorizontalAlignment="Center" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTextColumn Header="Papel" Binding="{Binding RoleLabel, Mode=OneWay}" Width="245" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="Última Modificação" Binding="{Binding FormattedLastModified, Mode=OneWay}" SortMemberPath="LastModifiedUtc" Width="140" IsReadOnly="True" />
+                                        <DataGridTextColumn Header="Caminho Completo" Binding="{Binding FullPath, Mode=OneWay}" Width="*" IsReadOnly="True" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </TabItem>
+
+                <!-- ABA 8: Histórico das Operações Realizadas -->
+                <TabItem Header="Histórico" Padding="12,6">
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0" Background="#1E2029" BorderBrush="#2D3140" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,8">
+                            <Grid>
+                                <TextBlock Text="Registro auditável local de todas as análises, prévias, comandos oficiais, restaurações e limpezas realizadas pelo DiskInspector."
+                                           VerticalAlignment="Center" FontSize="12" Foreground="#D1D5DB" />
+                                <Button Command="{Binding ExportHistoryCommand}"
+                                        Content="💾 Exportar Histórico (JSON)"
+                                        HorizontalAlignment="Right"
+                                        Height="30"
+                                        Padding="12,0" />
+                            </Grid>
+                        </Border>
+
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding OperationLogs}" IsReadOnly="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Data / Hora" Binding="{Binding FormattedTimestamp, Mode=OneWay}" SortMemberPath="TimestampUtc" Width="145" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Tipo de Operação" Binding="{Binding OperationType, Mode=OneWay}" Width="195" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Alvo" Binding="{Binding TargetPath, Mode=OneWay}" Width="200" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Volume" Binding="{Binding FormattedBytes, Mode=OneWay}" SortMemberPath="AffectedBytes" Width="105" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Status" Binding="{Binding StatusBadge, Mode=OneWay}" Width="115" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Resumo" Binding="{Binding Summary, Mode=OneWay}" Width="280" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Detalhes" Binding="{Binding Details, Mode=OneWay}" Width="*" IsReadOnly="True" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+
+            <!-- Painel Lateral Direito: Inspeção Detalhada do item selecionado -->
+            <Border Grid.Column="1" Background="#1C1E26" BorderBrush="#2B2E3B" BorderThickness="1" CornerRadius="8" Padding="14">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel DataContext="{Binding SelectedInspectorItem}">
+                        <TextBlock Text="DETALHES DO ITEM SELECIONADO" FontSize="11" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,10" />
+
+                        <!-- 9. Classificação de Risco em destaque -->
+                        <Border Background="{Binding RiskClassification, Mode=OneWay, Converter={StaticResource RiskBgConverter}}"
+                                BorderBrush="{Binding RiskClassification, Mode=OneWay, Converter={StaticResource RiskFgConverter}}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="10,8"
+                                Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="CLASSIFICAÇÃO DE RISCO" FontSize="9.5" FontWeight="Bold" Foreground="#9CA3AF" />
+                                <TextBlock Text="{Binding RiskDisplayName, Mode=OneWay, FallbackValue='Selecione um item em uma lista ou na árvore'}"
+                                           Foreground="{Binding RiskClassification, Mode=OneWay, Converter={StaticResource RiskFgConverter}}"
+                                           FontSize="14"
+                                           FontWeight="Bold"
+                                           Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 1. Nome do arquivo ou pasta -->
+                        <TextBlock Text="NOME DO ARQUIVO OU PASTA" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" />
+                        <TextBlock Text="{Binding Name, Mode=OneWay, FallbackValue='—'}" FontSize="14" FontWeight="SemiBold" Foreground="#F9FAFB" TextWrapping="Wrap" Margin="0,2,0,10" />
+
+                        <!-- 2. Caminho completo + Quem está usando (Diferencial 7A) -->
+                        <TextBlock Text="CAMINHO COMPLETO" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" />
+                        <Border Background="#14161C" BorderBrush="#2B2E3B" BorderThickness="1" CornerRadius="4" Padding="8,6" Margin="0,3,0,6">
+                            <TextBlock Text="{Binding FullPath, Mode=OneWay, FallbackValue='—'}" FontSize="11.5" Foreground="#D1D5DB" TextWrapping="Wrap" />
+                        </Border>
+                        <WrapPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <Button Command="{Binding DataContext.OpenInExplorerCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    Content="📂 Abrir no Explorer"
+                                    Height="27"
+                                    Padding="9,0"
+                                    Margin="0,0,6,4" />
+                            <Button Command="{Binding DataContext.CopyPathCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    Content="📋 Copiar Caminho"
+                                    Height="27"
+                                    Padding="9,0"
+                                    Margin="0,0,6,4" />
+                            <Button Command="{Binding DataContext.CheckWhoIsUsingCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    Content="🔍 Quem está usando?"
+                                    Height="27"
+                                    Padding="9,0"
+                                    Margin="0,0,0,4"
+                                    Background="#1E293B"
+                                    Foreground="#38BDF8"
+                                    BorderBrush="#0284C7"
+                                    ToolTip="Consulta o Windows Restart Manager (rstrtmgr.dll) para descobrir qual processo mantém este arquivo ou pasta aberto, sem travar nada" />
+                        </WrapPanel>
+                        <Border Background="#14161C" BorderBrush="#2B2E3B" BorderThickness="1" CornerRadius="4" Padding="8,5" Margin="0,0,0,10">
+                            <TextBlock Text="{Binding DataContext.LockingProcessesStatusText, RelativeSource={RelativeSource AncestorType=Window}, Mode=OneWay}"
+                                       FontSize="11"
+                                       Foreground="#9CA3AF"
+                                       TextWrapping="Wrap" />
+                        </Border>
+
+                        <!-- 3. Tamanho (Lógico vs Alocado em Disco) -->
+                        <TextBlock Text="TAMANHO LÓGICO vs ESPAÇO EFETIVAMENTE ALOCADO" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" />
+                        <Border Background="#14161C" BorderBrush="#2B2E3B" BorderThickness="1" CornerRadius="4" Padding="8,6" Margin="0,3,0,10">
+                            <StackPanel>
+                                <TextBlock FontSize="12.5" Foreground="#F9FAFB">
+                                    <Run Text="Lógico: " Foreground="#9CA3AF" />
+                                    <Run Text="{Binding FormattedLogicalSize, Mode=OneWay, FallbackValue='0 B'}" FontWeight="Bold" Foreground="#38BDF8" />
+                                    <Run Text="  |  Alocado: " Foreground="#9CA3AF" />
+                                    <Run Text="{Binding FormattedAllocatedSize, Mode=OneWay, FallbackValue='0 B'}" FontWeight="Bold" Foreground="#A78BFA" />
+                                </TextBlock>
+                                <TextBlock FontSize="11" Foreground="#9CA3AF" Margin="0,3,0,0">
+                                    <Run Text="Arquivos: " />
+                                    <Run Text="{Binding FileCount, StringFormat={}{0:N0}, Mode=OneWay}" />
+                                    <Run Text=" • Subpastas: " />
+                                    <Run Text="{Binding DirectoryCount, StringFormat={}{0:N0}, Mode=OneWay}" />
+                                    <Run Text=" • &lt;16 KB: " />
+                                    <Run Text="{Binding SmallFileCount, StringFormat={}{0:N0}, Mode=OneWay}" />
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 4. Data da última modificação -->
+                        <TextBlock Text="DATA DA ÚLTIMA MODIFICAÇÃO" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" />
+                        <TextBlock Text="{Binding FormattedLastModified, Mode=OneWay, FallbackValue='—'}" FontSize="12.5" Foreground="#E5E7EB" Margin="0,2,0,10" />
+
+                        <!-- 5. Categoria -->
+                        <TextBlock Text="CATEGORIA" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" />
+                        <TextBlock Text="{Binding CategoryDisplayName, Mode=OneWay, FallbackValue='—'}" FontSize="12.5" FontWeight="SemiBold" Foreground="#60A5FA" Margin="0,2,0,10" />
+
+                        <!-- 6. Aplicativo ou componente associado -->
+                        <TextBlock Text="APLICATIVO OU COMPONENTE ASSOCIADO" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" />
+                        <TextBlock Text="{Binding AssociatedAppOrComponent, Mode=OneWay, FallbackValue='Desconhecido'}" FontSize="12.5" FontWeight="SemiBold" Foreground="#F9FAFB" TextWrapping="Wrap" Margin="0,2,0,10" />
+
+                        <!-- 7. Explicação sobre sua finalidade -->
+                        <TextBlock Text="EXPLICAÇÃO SOBRE SUA FINALIDADE" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" />
+                        <Border Background="#14161C" BorderBrush="#2B2E3B" BorderThickness="1" CornerRadius="4" Padding="8,6" Margin="0,3,0,10">
+                            <TextBlock Text="{Binding PurposeExplanation, Mode=OneWay, FallbackValue='—'}" FontSize="12" Foreground="#E5E7EB" TextWrapping="Wrap" />
+                        </Border>
+
+                        <!-- 8. Consequências potenciais da exclusão -->
+                        <TextBlock Text="CONSEQUÊNCIAS POTENCIAIS DA EXCLUSÃO" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" />
+                        <Border Background="#1F191B" BorderBrush="#4C252B" BorderThickness="1" CornerRadius="4" Padding="8,6" Margin="0,3,0,10">
+                            <TextBlock Text="{Binding DeletionConsequences, Mode=OneWay, FallbackValue='—'}" FontSize="12" Foreground="#FCA5A5" TextWrapping="Wrap" />
+                        </Border>
+
+                        <!-- 10. Ação recomendada -->
+                        <TextBlock Text="AÇÃO RECOMENDADA" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" />
+                        <Border Background="#15221B" BorderBrush="#234732" BorderThickness="1" CornerRadius="4" Padding="8,6" Margin="0,3,0,10">
+                            <StackPanel>
+                                <TextBlock Text="{Binding RecommendationDisplayName, Mode=OneWay, FallbackValue='—'}" FontSize="12.5" FontWeight="Bold" Foreground="#4ADE80" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding RecommendationDetails, Mode=OneWay, FallbackValue=''}" FontSize="11.5" Foreground="#D1FAE5" TextWrapping="Wrap" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Comando oficial de manutenção (quando aplicável — Diferencial 4: copiar ou executar em 1 clique) -->
+                        <Border Background="#14161C"
+                                BorderBrush="#38BDF8"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="8,6"
+                                Visibility="{Binding OfficialMaintenanceCommand, Mode=OneWay, Converter={StaticResource NullToVis}}">
+                            <StackPanel>
+                                <TextBlock Text="PROCEDIMENTO / COMANDO OFICIAL DOCUMENTADO:" FontSize="10" FontWeight="Bold" Foreground="#38BDF8" />
+                                <TextBlock Text="{Binding OfficialMaintenanceCommand, Mode=OneWay}" FontFamily="Consolas" FontSize="11.5" Foreground="#F9FAFB" TextWrapping="Wrap" Margin="0,3,0,6" />
+                                <WrapPanel Orientation="Horizontal">
+                                    <Button Command="{Binding DataContext.ExecuteOfficialCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            Content="⚡ Executar Comando (1 Clique)"
+                                            Height="26"
+                                            Padding="10,0"
+                                            Margin="0,0,6,4"
+                                            Background="#143323"
+                                            Foreground="#4ADE80"
+                                            FontWeight="SemiBold"
+                                            BorderBrush="#22C55E"
+                                            ToolTip="Executa o comando oficial acima e mede o espaço antes e depois" />
+                                    <Button Command="{Binding DataContext.CopyOfficialCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            Content="📋 Copiar Comando"
+                                            Height="26"
+                                            Padding="10,0"
+                                            Margin="0,0,0,4"
+                                            Background="#1E293B"
+                                            Foreground="#38BDF8"
+                                            BorderBrush="#38BDF8" />
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Overlay Visual de Carregamento em Tempo Real (Otimizações, Comandos Oficiais e Limpeza) -->
+            <Border Grid.ColumnSpan="2"
+                    Background="#C80D0F16"
+                    CornerRadius="8"
+                    Visibility="{Binding IsActionModalBusy, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+                <Border Width="640"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        Background="#1A1D28"
+                        BorderBrush="#38BDF8"
+                        BorderThickness="1.5"
+                        CornerRadius="10"
+                        Padding="22,18">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Background="#0284C7" CornerRadius="4" Padding="7,2" Margin="0,0,10,0">
+                                    <TextBlock Text="EM EXECUÇÃO" FontSize="10" FontWeight="Bold" Foreground="White" />
+                                </Border>
+                                <TextBlock Text="{Binding BusyOperationTitle, Mode=OneWay}"
+                                           FontSize="15"
+                                           FontWeight="Bold"
+                                           Foreground="#F9FAFB"
+                                           TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                            <Border Grid.Column="1" Background="#14161F" BorderBrush="#2E3446" BorderThickness="1" CornerRadius="5" Padding="9,3">
+                                <TextBlock FontSize="12" FontWeight="Bold" Foreground="#38BDF8">
+                                    <Run Text="⏱ " />
+                                    <Run Text="{Binding ElapsedTimeText, Mode=OneWay}" />
+                                </TextBlock>
+                            </Border>
+                        </Grid>
+
+                        <ProgressBar IsIndeterminate="True"
+                                     Height="8"
+                                     Background="#262A38"
+                                     Foreground="#38BDF8"
+                                     BorderThickness="0"
+                                     Margin="0,2,0,12" />
+
+                        <TextBlock Text="ETAPA ATUAL:" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" />
+                        <TextBlock Text="{Binding BusyStepDetail, Mode=OneWay}"
+                                   FontSize="12.5"
+                                   FontWeight="SemiBold"
+                                   Foreground="#86EFAC"
+                                   TextWrapping="Wrap"
+                                   Margin="0,3,0,12" />
+
+                        <TextBlock Text="REGISTRO DE ATIVIDADE EM TEMPO REAL:" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" />
+                        <Border Background="#12141C"
+                                BorderBrush="#2B2E3B"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="10,8"
+                                Height="125"
+                                Margin="0,4,0,14">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <TextBlock Text="{Binding BusyLiveOutputLog, Mode=OneWay}"
+                                           FontFamily="Consolas"
+                                           FontSize="11.5"
+                                           Foreground="#D1D5DB"
+                                           TextWrapping="Wrap" />
+                            </ScrollViewer>
+                        </Border>
+
+                        <Grid>
+                            <TextBlock Text="A operação está rodando em segundo plano sem travar o aplicativo."
+                                       FontSize="11.5"
+                                       Foreground="#9CA3AF"
+                                       VerticalAlignment="Center" />
+                            <Button Command="{Binding CancelScanCommand}"
+                                    Content="⏹ Cancelar Operação"
+                                    HorizontalAlignment="Right"
+                                    Height="32"
+                                    Padding="14,0"
+                                    Background="#7F1D1D"
+                                    Foreground="#FEE2E2"
+                                    FontWeight="SemiBold"
+                                    BorderBrush="#EF4444" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

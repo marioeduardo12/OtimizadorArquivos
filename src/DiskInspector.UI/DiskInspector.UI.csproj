@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>DiskInspector</AssemblyName>
+    <RootNamespace>DiskInspector.UI</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <LangVersion>latest</LangVersion>
+    <Version>1.0.0</Version>
+    <Authors>DiskInspector Engineering</Authors>
+    <Product>DiskInspector — Analisador e Otimizador de Armazenamento</Product>
+    <Description>Analisador profundo e otimizador seguro de armazenamento para Windows 11</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DiskInspector.Core\DiskInspector.Core.csproj" />
+    <ProjectReference Include="..\DiskInspector.Infrastructure\DiskInspector.Infrastructure.csproj" />
+    <ProjectReference Include="..\DiskInspector.Analysis\DiskInspector.Analysis.csproj" />
+    <ProjectReference Include="..\DiskInspector.Cleanup\DiskInspector.Cleanup.csproj" />
+  </ItemGroup>
+
+</Project>
+
